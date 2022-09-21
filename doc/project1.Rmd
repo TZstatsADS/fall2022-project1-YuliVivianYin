@@ -5,7 +5,9 @@ date: "9/14/2022"
 output: html_document
 ---
 
-![ ](/Users/YULI/Desktop/STAT5243/project1/figs/header.jpg)
+TEST TEST TEST 
+
+![ ](../figs/header.jpg)
 
 Philosophy, science and religion are three endeavours that shape in fundamental ways of how we think, what we value, and how we live. This report aims to explore different philosophers' views on religion and science - how much did they care about and how was their attitudes towards them. 
 
