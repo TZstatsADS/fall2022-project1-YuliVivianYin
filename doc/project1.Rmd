@@ -5,13 +5,9 @@ date: "9/14/2022"
 output: html_document
 ---
 
-TEST TEST TEST 
-
 ![ ](../figs/header.jpg)
 
-Philosophy, science and religion are three endeavours that shape in fundamental ways of how we think, what we value, and how we live. This report aims to explore different philosophers' views on religion and science - how much did they care about and how was their attitudes towards them. 
-
-The dataset [philosophy_data](https://www.kaggle.com/datasets/kouroshalizadeh/history-of-philosophy) I used in this project is from kaggle website which compiles over 300,000 sentences from over 50 texts spanning 10 major schools of philosophy. Luckily, most of the text data were already cleaned so that we can use them directly and easily. 
+Philosophy, science and religion are three endeavours that shape in fundamental ways of how we think, what we value, and how we live. This report aims to explore different philosophers' perspectives on religion and science - how much did they care about those ideas (i.e. how often did they mention them) and how were their attitudes towards them (i.e. positive or negative). 
 
 ```{r, warning=FALSE, message=FALSE, echo=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -55,14 +51,16 @@ This notebook was prepared with the following environmental settings.
 print(R.version)
 ```
 
+### Part 0: Data Processing and Data Cleanning
+
+The dataset [philosophy_data](https://www.kaggle.com/datasets/kouroshalizadeh/history-of-philosophy) I used in this project is from kaggle website which compiles over 300,000 sentences from over 50 texts spanning 13 major schools of philosophy. Luckily, most of the text data were already cleaned so that we can use them directly and easily. 
+
 ```{r, warning=FALSE, message=FALSE, echo=FALSE}
-urlfile<- '/Users/YULI/Desktop/STAT5243/project1/data/philosophy_data.csv'
+urlfile<- '../data/philosophy_data.csv'
 phi_data <- read.csv(urlfile, stringsAsFactors = FALSE)
 ```
 
-### Part 1: Philosophy and Religion
-
-First of all, I extract and analyze the philosophical text which are related to religion from the dataset. To filter out those data, I use *grepl()* to search for the keywords -- god, gods, religion, religious, theology, theological -- in each sentence from each row. By using this method, we find out a total of 8791 rows from our dataset. Grantedly, it is not a fully exhaustive way to find out all the religion-related text, but we think those data are big enough for us to conduct further text analysis. *(This religion-filtered data is uploaded to the output file as 'religion.csv')*
+Since we start from analyzing the relationship between philosophy and religion, I firstly extract the philosophical text which are related to religion from the dataset for further sentiment analysis. To filter out those data, I use *grepl()* to search for the keywords -- god, gods, religion, religious, theology, theological -- in each sentence from each row. By using this method, we find out a total of 8791 rows from our dataset. Grantedly, it is not a fully exhaustive way to find out all the religion-related text, but we think those data are big enough for us to conduct further text analysis. *(This religion-filtered data is uploaded to the output file as 'religion.csv')*
 
 ```{r, warning=FALSE, message=FALSE, echo=FALSE}
 religion <- phi_data[grepl("gods",phi_data$tokenized_txt)|
@@ -71,17 +69,20 @@ religion <- phi_data[grepl("gods",phi_data$tokenized_txt)|
                      grepl("religious",phi_data$tokenized_txt)|
                      grepl("theology",phi_data$tokenized_txt)|
                      grepl("theological",phi_data$tokenized_txt),]
+
+write_csv(religion, '../output/religion_data.csv')  
 ```
 
-```{r,echo=FALSE}
-write_csv(religion, '/Users/YULI/Desktop/STAT5243/project1/output/religion_data.csv')  
-```
+To better compare the relationship between philiosophy, religion and science, it is neccesary to control the "school" variable (i.e. comparing the idea of religion and science within the same philosopical schools). Since the dataset is too large, I decide to focus on two schools -- one with very positive idea towards religion and the other with very negative idea, and further explore their attitudes towards science. We will see which two schools are picked in part 1 and I will further process these two schools' data to analyze their perspectives on science in part 2. 
+
+
+### Part 1: Philosophy and Religion
 
 ##### Question 1.1: Which schools mention the idea of religion frequently? 
 
 To answer this question, I count the number of sentences related to the idea of religion by each school and sort them in a descending order. 
 
-From the bar plot below, we can easily see that **Rationalism, Plato, German_idealism, Continental and Nietzsche** are the top 5 schools which have more than 500 entries of text data related to religion. Therefore, if someone wants to know more about the religion idea in philosophy, we could recomend him or her to read those schools' books based on our observation. 
+From the bar chart below, we can easily see that **Rationalism, Plato, German_idealism, Continental and Nietzsche** are the top 5 schools which mentioned religion frequently -- they all have more than 500 entries of text data related to religion. This gives us the idea that, if someone wants to know more about the religion idea in philosophy, we could recomend him or her to read those schools' books based on this observation. 
 
 ```{r, warning=FALSE, message=FALSE, echo=FALSE}
 rel_sch <- unique(religion$school)
@@ -102,14 +103,14 @@ ggplot(data = rel,
        labs(x = "School", y = "Number of related sentences") +
        ggtitle("The Frequency of Religion Mentioned by Each School") + 
        coord_flip()
-ggsave("/Users/YULI/Desktop/STAT5243/project1/figs/religion_freq.jpg")
+ggsave("../figs/religion_freq.jpg")
 ```
 
-###### Question 1.2: Which schools have more positive attitude towards religion? Which schools are more negative? 
+##### Question 1.2: Which schools have more positive attitude towards religion? Which schools are more negative? 
 
-I try to answer this question by using the NRC sentimental analysis. This package helps to count and categorize the words as "positive" and "negative". I define the positive ratio as the percentage of positive words appeared in each schools' text and recenter the ratio at 50% level. In other words, if the value of a certain school is above 0, it tends to be positive towards the religion idea, and the bigger the number is, the more positive its attitude is. And vice versa. 
+I try to answer this question by using the NRC sentimental analysis. This package helps to categorize and count the words as "positive" and "negative". I define the positive ratio as the percentage of positive words appeared in each schools' text and re-center the ratio at 50% level. In other words, if the value of a certain school is above 0, it tends to be positive towards the religion idea, and the bigger the number is, the more positive its attitude is.  
 
-From the bar chart below, we can see that Rationalism seems to hold the most positive attitude -- its value is around 0.12, meaning that ~62% of the text showing positiveness. On the other hand, Communism is in general more negative with only ~41% test showing positiveness. 
+From the bar chart below, we can see that Rationalism seems to hold the most positive attitude among all the schools -- its value is around 0.12, meaning that ~62% of the text showing positiveness. On the other hand, Communism is in general more negative with only ~41% text showing positiveness. 
 
 ```{r, warning=FALSE, message=FALSE, echo=FALSE}
 rel_series = tibble()
@@ -153,12 +154,12 @@ ggplot(data = rel_senti_tbl,
        labs(x = "School", y = "Positive Ratio") +
        ggtitle("The Positiveness towards Religion in Each School") + 
        coord_flip()
-ggsave("/Users/YULI/Desktop/STAT5243/project1/figs/religion_postiveness.jpg")
+ggsave("../figs/religion_postiveness.jpg")
 ```
 
-###### Question 1.3: Explore Sentiment on the word level.  
+##### Question 1.3: Sentiment Analysis by Words.  
 
-According to our result in 1.2, I decide to take a deeper look into the two extreme schools -- rationalism, which is the most positive one, and communism, which is the most negative one. I try to analyze their sentiment by using wordcloud to see what words are used frequently when these two schools describe religion. I also compare and visualize the top n words for each sentiment by using the bar charts as shown below. 
+Based on 1.2, I take a deeper look into the two extreme schools -- rationalism, the most positive one, and communism, the most negative one. I analyze their sentiment by using wordcloud to see which words are used frequently when they describe religion. I also access and visualize the top n words contributed for each sentiment by using the bar charts as shown below. 
 
 ```{r, warning=FALSE, message=FALSE, echo=FALSE}
 rel_stopwords <- c(stopwords("english"),'god','gods',
@@ -201,7 +202,6 @@ rel_df_com <- data.frame(word = names(rel_words_com),freq=rel_words_com)
 wordcloud(words = rel_df_com$word, freq = rel_df_com$freq, min.freq = 1, max.words=50, 
           random.order=FALSE,rot.per = 0.35,colors=brewer.pal(8, "Dark2"),scale=c(1.6,0.15))
 text(x = 0.5, y = 1,"Communism")
-ggsave("/Users/YULI/Desktop/STAT5243/project1/figs/religion_wordcloud.jpg")
 ```
 
 ```{r, warning=FALSE, message=FALSE, echo=FALSE}
@@ -248,19 +248,19 @@ rel_words_com_bar <- rel_words_com %>%
                       coord_flip()
 
 ggarrange(rel_words_rat_bar, rel_words_com_bar, ncol = 1, nrow = 2)
-ggsave("/Users/YULI/Desktop/STAT5243/project1/figs/religion_word_freq.jpg")
+ggsave("../figs/religion_word_freq.jpg")
 ```
 
-For Rationalism, words frequently appeared in the text are something like "love", "good", "wisdom" and "perfect", implying that rationalists believe God plays an active and effective role in human life. Even for the negative words like "evil" and "sin", they are more about describing the idea from Christianity rather than expressing criticism. Besides, we can also see that the positive words have shown up much more often than the negative words if we take a look at the x axis of the barplot, meaning that rationalism overall holds a very positive perspective towards religion.  
+For Rationalism, words that frequently appeared in the text are something like "love", "good", "wisdom" and "perfect", implying that rationalists believe God plays an active and effective role in human life. Even for the negative words like "evil" and "sin", they are more about describing the idea from Christianity rather than expressing criticism. Besides, we can also see that the positive words have shown up much more often than the negative words if we take a look at the x axis of the barplot, meaning that rationalism overall holds a very positive perspective towards religion.  
 
-For Communism, most of the words, no matter positive ones or negative ones, are related to politics (e.g. "political", "laws", "revolunary") and labors (e.g. "labour", "peasantry", "work"), trying to criticize that religion is used as a tool to suppress pople and exploit labor forces by dictators. 
+For Communism, most of the words, no matter positive ones or negative ones, are related to politics (e.g. "political", "laws", "revolunary") and labors (e.g. "labour", "peasantry", "work"). We can tell from those words that Communists tend to criticize that religion is always used as a tool to suppress pople and exploit labor forces by dictators. 
 
 
+##### Question 1.4: Sentiment Analysis by Sentences. 
 
-##### Question 1.4: Explore Sentiment on the sentence level. 
+After looking into the single words from the text data, I continue the sentiment analysis on the sentence levle -- find the emontinally charged sentences in Rationalismm and Communism to see how those philosphers express their views on religion. To achieve this, I use the NRC sentiment analysis from the syuzhet package and sort each sentence by their score on "positive" in a descending order. This allows me to find both the positive and negative sentences related to religon written by each school. 
 
-After analyzing the sentiment based on word, I continue the analysis on the sentence levl. 
-
+**Rationalism: **: 
 
 ```{r, warning=FALSE, message=FALSE, echo=FALSE}
 sentence_rat = data.frame()
@@ -282,6 +282,10 @@ for (i in pos_rat){
 pos_sent_rat
 ```
 
+These sentences from Rationalism express the idea that God is great and infinite in nature and is the creator of all things: He can recoginze things sooner and more readily than human beings but gives people the freedom to percept things. This Rationalism's positiveness towards religion shown in the sentences aligns with what we have already seen from the word analysis. But by looking into the sentences, we can get a one-step deeper understanding of the Rationalism's ideology which we couldn't tell from the previous analysis -- rationalism was not opposed to the existence of God and how good the God is, but they assert that it is important for humans to properly use the intellect to grasp the truths.  
+
+**Communism: **
+
 ```{r, warning=FALSE, message=FALSE, echo=FALSE}
 sentence_com = data.frame()
 for(i in 1:nrow(rel_com)){
@@ -301,10 +305,54 @@ for (i in neg_com){
 }
 neg_sent_com
 ```
+ 
+Similar to what we saw in 1.3, these sentences from Communism again show that religion was closely related to polticis and criticize that officials misaneoulsy persecute the religious sects and improperly use it as a way for political agitation and for drawing the masses into the political struggle. 
+ 
 
+### Part 2: Philosophy and Science
 
-### Part 2: Philosophy, Religion and Science
+##### Question 2.1: Which schools mention the idea of science frequently? 
 
+Similiar to what I did in 1.1, I first filter out the science-related entries by using the keywords "science", "sciences", "scientific" and "scientifically", count the number of sentences related to science by each school, and sort them in a descending order. *(This science-filtered data is uploaded to the output file as 'science_data.csv')*
+
+```{r, warning=FALSE, message=FALSE, echo=FALSE}
+science <- phi_data[grepl("science",phi_data$tokenized_txt)|
+                     grepl("sciences",phi_data$tokenized_txt)|
+                     grepl("scientific",phi_data$tokenized_txt)|
+                     grepl("scientifically",phi_data$tokenized_txt),]
+
+write_csv(science, '../output/science_data.csv') 
+```
+
+From the bar chart below, we see that **Phenomenology, German_idealism, Analytic, Continental and Aristotle** are the top 5 schools which mentioned science frequently -- they all have more than 500 entries of text data related to science. 
+
+```{r, warning=FALSE, message=FALSE, echo=FALSE}
+sci_sch <- unique(science$school)
+sci_count <- c()
+for (i in sci_sch){
+  sci_sch_i <- science[science$school == i,]
+  count_i <- nrow(sci_sch_i)
+  sci_count <- c(sci_count,count_i)
+}
+
+sci <- data.frame(school = sci_sch,count = sci_count)
+sci <- sci[order(sci$count,decreasing = TRUE),]
+
+ggplot(data = sci,
+       aes(x = reorder(school,count), y = count, fill = school)) +
+       geom_bar(stat="identity") + 
+       scale_fill_brewer(palette="Set3") + 
+       labs(x = "School", y = "Number of related sentences") +
+       ggtitle("The Frequency of Science Mentioned by Each School") + 
+       coord_flip()
+ggsave("../figs/science_freq.jpg")
+```
+
+##### Question 2.2: How were Rationalism and Communism's attitudes towards science?
+
+In part 1, we took a deep dive into the question that how were the philosophers thinking about religion. We have shown that among the 13 major schools of philosophy, Rationalism holds relatively more positive view on God and encourage people to properly use our intellect given by God to understand the world, while Communism holds relatively more negative view by criticizing that religion has been evolved into a political tool and a manifestation of government tyranny. 
+
+In part 2, I continue my analysis in Rationalism and Communism and try to explore their perspectives towards science respectively. Before we get started, I first extract the text data from these two schools and filter out the science-related entries by using the keywords. 
 
 ```{r, warning=FALSE, message=FALSE, echo=FALSE}
 sci_rat <- phi_data[phi_data$school == 'rationalism',]
@@ -320,14 +368,7 @@ sci_com <- sci_com[grepl("science",sci_com$tokenized_txt)|
                    grepl("scientifically",sci_com$tokenized_txt),]
 ```
 
-```{r, echo=FALSE}
-write_csv(sci_rat, '/Users/YULI/Desktop/STAT5243/project1/output/science_rationalism.csv')  
-write_csv(sci_com, '/Users/YULI/Desktop/STAT5243/project1/output/science_communism.csv')  
-```
-
-
-##### Question 2.1:  
-
+To get a sense of how do these two schools' think about science, I then use the NRC sentimental analysis from syuzhet package and access the scores on both negative and positive attitudes. In the bar charts below, the blue bars represent the positive scores for each sentence and the red bars represent the negative scores. We can see that both of the two schools have larger area in blue than in red, implying that both of them hold relatively positive views towards science. 
 
 ```{r,warning=FALSE, message=FALSE, echo=FALSE}
 sci_sentence_rat = data.frame()
@@ -361,11 +402,17 @@ sci_sent_com_plot <- ggplot(sci_sentence_com,
                      ggtitle("         Science-related sentences from Communism")
 
 ggarrange(sci_sent_rat_plot, sci_sent_com_plot, ncol = 1, nrow = 2)
-ggsave("/Users/YULI/Desktop/STAT5243/project1/figs/science_sentence.jpg")
+ggsave("../figs/science_sentence.jpg")
 ```
 
 
-##### Question 2.2: 
+##### Question 2.3: What were the words used to describe science frequently? 
+
+To answer this question, I again use the wordcloud to detect the words that were used frequently by these two schools when describing science. 
+
+If we look at the two wordclouds together, we can see that most of the words are neutral to positive, such as "necessary","great", "development", and "modern", implying that both of the two schools believe science is good and useful. 
+
+To be more specific, for Rationalism, we can see that those words are mainly related to "nature", "mind"" and "truth", and the verbs here are more about "study" and "apply". It actually aligns with what we have concluded in part 1 that rationalism encourages people to learn how to properly use our minds to study the nature and find the truth. Communism, on the other hand, even it shows positive attitudes science, the words are still related to "political" and "labor". It is not very surprised as socialism and production are always the core ideas of communism and communists are always commited themselves to exploring what is benficial to the society (probably science).
 
 ```{r, warning=FALSE, message=FALSE, echo=FALSE}
 sci_stopwords <- c(stopwords("english"), 'science','sciences','scientific','scientifically')
@@ -385,7 +432,7 @@ sci_words_rat <- sort(rowSums(sci_matrix_rat),decreasing=TRUE)
 sci_df_rat <- data.frame(word = names(sci_words_rat),freq=sci_words_rat)
 
 wordcloud(words = sci_df_rat$word, freq = sci_df_rat$freq, min.freq = 1, max.words=50, 
-          random.order=FALSE,rot.per = 0.35,colors=brewer.pal(8, "Dark2"),scale=c(2.8,0.2))
+          random.order=FALSE,rot.per = 0.35,colors=brewer.pal(8, "Dark2"),scale=c(2.3,0.2))
 text(x = 0.5, y = 1,"Rationalism")
 
 sci_docs_com <- VCorpus(VectorSource(sci_com$sentence_str))%>%
@@ -402,11 +449,19 @@ sci_words_com <- sort(rowSums(sci_matrix_com),decreasing=TRUE)
 sci_df_com <- data.frame(word = names(sci_words_com),freq=sci_words_com)
 
 wordcloud(words = sci_df_com$word, freq = sci_df_com$freq, min.freq = 1, max.words=50, 
-          random.order=FALSE,rot.per = 0.35,colors=brewer.pal(8, "Dark2"),scale=c(2.8,0.2))
+          random.order=FALSE,rot.per = 0.35,colors=brewer.pal(8, "Dark2"),scale=c(2,0.2))
 text(x = 0.5, y = 1,"Communism")
-ggsave("/Users/YULI/Desktop/STAT5243/project1/figs/science_wordcloud.jpg")
 ```
 
+### Conclusion and Further Thoughts
 
+Religion and Science are two important topics that are actively dicussed by philosophers no matter in history or today. Through this project, I have three main findings by investigating into the philosophical text data:
 
+1. Rationalism, Plato, German_idealism, Continental and Nietzsche are the top 5 schools which discussed religion frequently, while Phenomenology, German_idealism, Analytic, Continental and Aristotle are the top 5 which mentioned science frequently. 
+
+2. Rationalism seems to hold the most positive view towards religion among all 13 major schools of religion. It describes the God as "great" and "infinite". At the same time, it also claims the necessity of science for the human beings to understand the world. By combining their perspectives towards both religion and science, we can see the core ideology of rationalism -- a class of truths created by God exists that the intellect can grasp directly. 
+
+3. Communism is considered to hold the most negative view towards religion, mainly because it thinks that religion has evolved into a political tool for the officials to suppress people and exploit labor forces. By analyzing the science-related text, we can see that communists are trying to seek some scientific way to establish a socioeconomic order which is centered around common ownership of the means of production, distribution, and exchange. 
+
+Since it is a relatively short project which we only have two weeks to work on, I decided to just focus on two schools to explore the relationship between philosophy, religion and science. In the future, we can take advantage of this extensive dataset to conduct sentiment analysis on other schools as well. We can also distinguish between different authors within the same school, because, for example, even in rationalism, René Descartes' main idea is still different from Baruch Spinoza and Gottfried Leibniz's. It may also a good idea to do topic clustering on religion and science, which could help us to see what aspects that different philosophers tend to focus on. 
 

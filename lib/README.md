@@ -2,5 +2,5 @@
 
 ### Code dev/lib Folder
 
-The lib directory contains various files with function definitions and computation codes for your data analysis. 
+The lib directory contains various files with function definitions and computation codes for your data analysis. (No such functions are used in this project so I simply leave this directory empty). 
 
